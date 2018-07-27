@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="blachniet.Avro" Version="0.4.0"/>
+    <PackageReference Include="Parquet.Net" Version="2.1.4" />
+    <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.1.0" />
+  </ItemGroup>
+</Project> 

@@ -1,0 +1,23 @@
+{
+  "bindings": [
+    {
+      "type": "eventGridTrigger",
+      "name": "eventGridEvent",
+      "direction": "in"
+    },
+    {
+      "type": "blob",
+      "name": "inputBlob",
+      "path": "{data.fileUrl}",
+      "connection": "feedstore_STORAGE",
+      "direction": "in"
+    },
+    {
+      "type": "blob",
+      "name": "outputBlob",
+      "path": "parquet/{rand-guid}.parquet",
+      "connection": "feedstore_STORAGE",
+      "direction": "out"
+    }
+  ]
+}

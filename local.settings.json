@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "WEBSITE_SLOT_NAME": "Production",
+    "FUNCTIONS_EXTENSION_VERSION": "beta",
+    "ScmType": "None",
+    "WEBSITE_AUTH_ENABLED": "False",
+    "APPINSIGHTS_INSTRUMENTATIONKEY": "6014dc63-0f04-43b7-8f11-0791e111803d",
+    "AzureWebJobsDashboard": "DefaultEndpointsProtocol=https;AccountName=tradingfeedsappb18f;AccountKey=2fsll4tFc4SXXT3s01tjAp89buE+YvtBCCa+PQAi/rNT/4mPmKkX+fg0SR/zCrw/46hi8MPu+/EkkicYPQz1JA==",
+    "WEBSITE_NODE_DEFAULT_VERSION": "8.11.1",
+    "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "DefaultEndpointsProtocol=https;AccountName=tradingfeedsappb18f;AccountKey=2fsll4tFc4SXXT3s01tjAp89buE+YvtBCCa+PQAi/rNT/4mPmKkX+fg0SR/zCrw/46hi8MPu+/EkkicYPQz1JA==",
+    "WEBSITE_CONTENTSHARE": "tradingfeedsappb18f",
+    "feedstore_STORAGE": "DefaultEndpointsProtocol=https;AccountName=feedstore;AccountKey=C1KYVihT/sQGScBG2Y7cPN4HJn4dV7N1IXWhf9AQMKfLZcTBUj3yzt7GweZ7y2omehOjYi20iNitU7OJN3SYIg==",
+    "WEBSITE_SITE_NAME": "tradingfeedsapp",
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=tradingfeedsappb18f;AccountKey=2fsll4tFc4SXXT3s01tjAp89buE+YvtBCCa+PQAi/rNT/4mPmKkX+fg0SR/zCrw/46hi8MPu+/EkkicYPQz1JA==",
+    "AzureWebJobs.validator.Disabled": "true"
+  }
+}
