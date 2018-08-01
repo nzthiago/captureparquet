@@ -1,0 +1,284 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "functionapp_name": {
+            "defaultValue": "nzthitradingfeedsapp1",
+            "type": "string"
+        },
+        "function_name": {
+            "defaultValue": "CaptureConverter",
+            "type": "string"
+        },
+        "namespace_name": {
+            "defaultValue": "nzthifeedhub1",
+            "type": "string"
+        },
+        "storageAccount_name": {
+            "defaultValue": "nzthifeedstore1",
+            "type": "string"
+        },
+        "eventhub_name": {
+            "defaultValue": "ticker",
+            "type": "string"
+        },
+        "capturecontainer": {
+            "defaultValue": "capture",
+            "type": "string"
+        },
+        "parquetcontainer": {
+            "defaultValue": "parquet",
+            "type": "string"
+        },
+        "gridsub_name": {
+            "defaultValue": "capturesub",
+            "type": "string"
+        },
+        "repourl": {
+            "defaultValue": "https://github.com/djrosanova/captureparquet.git",
+            "type": "string"
+        },
+        "repobranch": {
+            "defaultValue": "master",
+            "type": "string"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
+        "appInsightsName": {
+            "defaultValue": "",
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "name": "[parameters('namespace_name')]",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "isAutoInflateEnabled": true,
+                "maximumThroughputUnits": 20
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "name": "[parameters('storageAccount_name')]",
+            "apiVersion": "2018-02-01",
+            "location": "[parameters('location')]",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "supportsHttpsTrafficOnly": false,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            },
+            "resources": [
+                {
+                  "type": "blobServices",
+                  "name": "default",
+                  "apiVersion": "2017-10-01",
+                  "dependsOn": [
+                    "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]"
+                  ],
+                  "properties": {
+                    "Cors": {}
+                  },
+                  "resources": [
+                    {
+                      "type": "containers",
+                      "name": "[parameters('capturecontainer')]",
+                      "apiVersion": "2017-10-01",
+                      "dependsOn": [ "default" ]
+                    },
+                    {
+                        "type": "containers",
+                        "name": "[parameters('parquetcontainer')]",
+                        "apiVersion": "2017-10-01",
+                        "dependsOn": [ "default" ]
+                    }
+                  ]
+                }
+              ],
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "name": "[concat(parameters('namespace_name'), '/', parameters('eventhub_name'))]",
+            "apiVersion": "2017-04-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "messageRetentionInDays": 1,
+                "partitionCount": 2,
+                "status": "Active",
+                "captureDescription": {
+                    "enabled": true,
+                    "encoding": "Avro",
+                    "destination": {
+                        "name": "EventHubArchive.AzureBlockBlob",
+                        "properties": {
+                            "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]",
+                            "blobContainer": "[parameters('capturecontainer')]",
+                            "archiveNameFormat": "{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}"
+                        }
+                    },
+                    "intervalInSeconds": 300,
+                    "sizeLimitInBytes": 314572800
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', parameters('namespace_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2014-04-01",
+            "name": "[parameters('appInsightsName')]",
+            "type": "Microsoft.Insights/components",
+            "location": "[parameters('location')]",
+            "tags": {
+                "displayName": "AppInsightsComponent"
+            },
+            "properties": {
+                "applicationId": "[parameters('appInsightsName')]"
+            }
+        }
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "kind": "functionapp",
+            "name": "[parameters('functionapp_name')]",
+            "apiVersion": "2016-09-01",
+            "location": "[parameters('location')]",
+            "scale": null,
+            "properties": {
+                "name": "[parameters('functionapp_name')]",
+                "workerTierName": null,
+                "adminSiteName": null,
+                "hostingEnvironmentProfile": null,
+                "perSiteScaling": false,
+                "reserved": false,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2015-08-01",
+            "name": "[parameters('functionapp_name')]",
+            "type": "Microsoft.Web/sites",
+            "kind": "functionapp",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]",
+              "[resourceId('Microsoft.Web/serverfarms', parameters('functionapp_name'))]",
+              "[resourceId('microsoft.insights/components/', parameters('appInsightsName'))]"
+            ],
+            "properties": {
+               "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('functionapp_name'))]",
+               "siteConfig": {
+                  "alwaysOn": false,
+                  "appSettings": [
+                    {
+                        "name": "AzureWebJobsDashboard",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccount_name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name')),'2015-05-01-preview').key1)]"
+                    },
+                    {
+                        "name": "AzureWebJobsStorage",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccount_name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name')),'2015-05-01-preview').key1)]"
+                    },
+                    { 
+                          "name": "FUNCTIONS_EXTENSION_VERSION", 
+                          "value": "beta" 
+                    },
+                    { 
+                          "name": "FUNCTIONS_WORKER_RUNTIME", 
+                          "value": "dotnet" 
+                    },
+                    { 
+                          "name": "PROJECT", 
+                          "value": "functioncsharp" 
+                    },
+                    {
+                        "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                        "value": "[reference(concat('microsoft.insights/components/', parameters('appInsightsName'))).InstrumentationKey]"
+                    },
+                    {
+                        "name": "feedstore_STORAGE",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccount_name'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name')),'2015-05-01-preview').key1)]"
+                    }
+                  ]
+               }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                      "[resourceId('Microsoft.Web/Sites', parameters('functionapp_name'))]"
+                    ],
+                    "properties": {
+                      "RepoUrl": "[parameters('repourl')]",
+                      "branch": "[parameters('repobranch')]",
+                      "IsManualIntegration": true
+                    }
+                  }
+            ]
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/providers/eventSubscriptions",
+            "name": "[concat(parameters('namespace_name'), '/Microsoft.EventGrid/', parameters('gridsub_name'))]",
+            "apiVersion": "2018-01-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]"
+            ],
+            "properties": {
+                "destination": {
+                    "endpointType": "WebHook",
+                    "properties": {
+                        "endpointUrl": "[concat('https://', parameters('functionapp_name'), '.azurewebsites.net/runtime/webhooks/EventGridExtensionConfig?functionName=', parameters('function_name'), '&code=', listsecrets(resourceId('Microsoft.Web/sites/functions', parameters('functionapp_name'), parameters('function_name')),'2015-08-01').key)]"
+                    }
+                },
+                "filter": {
+                    "subjectBeginsWith": "",
+                    "subjectEndsWith": "",
+                    "isSubjectCaseSensitive": false,
+                    "includedEventTypes": ["All"]
+                }
+            }
+        }
+
+    ]
+}
